@@ -267,8 +267,8 @@ class EzQtDataSaver():
                 ref_count = coll_stock_fund_day.count_documents({'code': str(ts_code)[0:6]})
                 # 增量更新
                 if ref_count > 0:
-                    last_document = coll_stock_fund_day.find({'code': str(ts_code)[0:6]}).sort('date_stamp', pymongo.DESCENDING).limit(1)[0]
-                    start_date_new_format =last_document['trade_date']
+                    last_document = coll_stock_fund_day.find({'code': str(ts_code)[0:6]}).sort('date', pymongo.DESCENDING).limit(1)[0]
+                    start_date_new_format = last_document['trade_date']
                     start_date = last_document['date']
                     if start_date_new_format != end_date:
                         coll_stock_fund_day.insert_many(
@@ -317,8 +317,8 @@ class EzQtDataSaver():
                 ref_count = coll_stock_fund_adj.count_documents({'code': str(ts_code)[0:6]})
                 # 增量更新
                 if ref_count > 0:
-                    last_document = coll_stock_fund_adj.find({'code': str(ts_code)[0:6]}).sort('date_stamp', pymongo.DESCENDING).limit(1)[0]
-                    start_date_new_format =last_document['trade_date']
+                    last_document = coll_stock_fund_adj.find({'code': str(ts_code)[0:6]}).sort('date', pymongo.DESCENDING).limit(1)[0]
+                    start_date_new_format = last_document['trade_date']
                     start_date = last_document['date']
                     if start_date_new_format != end_date:
                         coll_stock_fund_adj.insert_many(
