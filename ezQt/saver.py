@@ -281,6 +281,7 @@ class EzQtDataSaver():
                                 )
                             )
                         )
+                        print(f"Saving {ts_code} from {start_date} to {end_date}")
                 else:
                     start_date = '1990-01-01'
                     if start_date != end_date:
@@ -294,6 +295,7 @@ class EzQtDataSaver():
                                 )
                             )
                         )
+                        print(f"Saving {ts_code} from {start_date} to {end_date}")
             except Exception as e:
                 print(e)
                 err.append(str(ts_code))
@@ -328,6 +330,7 @@ class EzQtDataSaver():
                                 )
                             )
                     )
+                    print(f"Saving {ts_code} from {start_date} to {end_date}")
                 else:
                     start_date = '1990-01-01'
                     if start_date != end_date:
@@ -340,6 +343,7 @@ class EzQtDataSaver():
                                 )
                             )
                         )
+                        print(f"Saving {ts_code} from {start_date} to {end_date}")
             except Exception as e:
                 print(e)
                 err.append(str(ts_code))
