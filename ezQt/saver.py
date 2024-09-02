@@ -148,7 +148,7 @@ class EzQtDataSaver():
                 def fetch_data():
                     data = None
                     try:
-                        time.sleep(0.002)
+                        time.sleep(0.1)
                         pro = self.get_pro()
                         data = ts.pro_bar(
                             api=pro,
