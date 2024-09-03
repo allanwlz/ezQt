@@ -43,11 +43,10 @@ class EzQtDataFetch():
         if isinstance(code, str):
             code = [code]
         res = None
-        print(start, end)
         if self.check_date_valid(end) and self.check_date_valid(start):
             cursor = collections.find(
                 {
-                    'ts_code': {
+                    'code': {
                         '$in': code
                     }, 
                     'date': {
@@ -66,10 +65,11 @@ class EzQtDataFetch():
                          'code']
                         )
                 ).query('volume>1'
-                ).set_index('date', drop=False)
+                )
+                res.trade_date = pd.to_datetime(res.date)
                 res = res.loc[:,
                     [
-                        'code',
+                        'trade_date',
                         'open',
                         'high',
                         'low',
@@ -77,8 +77,10 @@ class EzQtDataFetch():
                         'volume',
                         'amount',
                         'turnover_rate',
-                        'date'
                     ]]
+                res.index = res.trade_date
+                res.sort_index(inplace=True)
+                res.fillna(0.0,inplace=True)        
             except:
                 res = None
         return res

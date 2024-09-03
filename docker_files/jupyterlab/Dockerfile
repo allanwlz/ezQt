@@ -48,6 +48,10 @@ RUN git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
 RUN chown -R jovyan:users /home/jovyan
 
 RUN ~/.fzf/install --all
+
+# 安装其他你可能需要的库
+RUN pip install pyxirr 
+
 # 切换回 jovyan 用户
 USER jovyan
 # 为了方便调试，设置JupyterLab的密码（这里设置为'allan'）

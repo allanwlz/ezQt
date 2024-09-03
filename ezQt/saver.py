@@ -4,7 +4,7 @@ import datetime
 import tushare as ts
 import pandas as pd
 import pymongo
-import json
+import sys
 import dateutil.parser
 from tqdm import tqdm
 from bs4 import BeautifulSoup
@@ -56,10 +56,10 @@ class EzQtDataSaver():
         """ 根据代码自动判断类型及交易所
         """
         asset_type = 'E'
-        if code[:2] == '00':
+        if code[:2] in ['00', '30']:
             code += '.SZ'
-        elif code[:2] =='00':
-            code += '.SS'
+        elif code[:2] in ['60', '68']:
+            code += '.SH'
         elif code[:2] in ['15', '16', '18']:
             asset_type = 'FD'
             code += '.SZ'
@@ -227,7 +227,7 @@ class EzQtDataSaver():
         return adj
     
     def save_stock_fund_list(self, client=DATABASE):
-        stock_list, fund_list = self.fetch_stock_etf_basic()
+        stock_list, fund_list = self.fetch_stock_fund_list()
         date = str(datetime.date.today())
         date_stamp = ds2float(date)
         coll = client.stock_info_tushare
@@ -299,6 +299,7 @@ class EzQtDataSaver():
             except Exception as e:
                 print(e)
                 err.append(str(ts_code))
+            sys.stdout.flush()
             time.sleep(0.3)
             
     def save_stock_fund_adj(self, client=DATABASE):
