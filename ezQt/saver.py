@@ -282,6 +282,7 @@ class EzQtDataSaver():
                             )
                         )
                         print(f"Saving {ts_code} from {start_date} to {end_date}")
+                        time.sleep(1.0)
                 else:
                     start_date = '1990-01-01'
                     if start_date != end_date:
@@ -296,11 +297,12 @@ class EzQtDataSaver():
                             )
                         )
                         print(f"Saving {ts_code} from {start_date} to {end_date}")
+                        time.sleep(1.0)
             except Exception as e:
                 print(e)
                 err.append(str(ts_code))
+                time.sleep(10.0)
             sys.stdout.flush()
-            time.sleep(0.3)
             
     def save_stock_fund_adj(self, client=DATABASE):
         stock_list, fund_list = self.fetch_stock_fund_list()
@@ -330,8 +332,9 @@ class EzQtDataSaver():
                                     end_date
                                 )
                             )
-                    )
-                    print(f"Saving {ts_code} from {start_date} to {end_date}")
+                        )
+                        print(f"Saving {ts_code} from {start_date} to {end_date}")
+                        time.sleep(1.0)
                 else:
                     start_date = '1990-01-01'
                     if start_date != end_date:
@@ -345,10 +348,11 @@ class EzQtDataSaver():
                             )
                         )
                         print(f"Saving {ts_code} from {start_date} to {end_date}")
+                        time.sleep(1.0)
             except Exception as e:
                 print(e)
+                time.sleep(10.0)
                 err.append(str(ts_code))
-            time.sleep(0.3)
         
     @property
     def trade_date_sse(self):
