@@ -30,7 +30,25 @@ def date_conver_to_new_format(date_str):
         int(time_now.tm_mon),
         int(time_now.tm_mday)
     )
-    
+
+
+def code_assetType_convert(code):
+    """ 根据代码自动判断类型及交易所
+    """
+    asset_type = 'E'
+    if code[:2] in ['00', '30']:
+        code += '.SZ'
+    elif code[:2] in ['60', '68']:
+        code += '.SH'
+    elif code[:2] in ['15', '16', '18']:
+        asset_type = 'FD'
+        code += '.SZ'
+    elif code[:2] in ['50', '51', '52']:
+        asset_type = 'FD'
+        code += '.SH'
+    return code, asset_type
+
+
 def json_from_pandas(data):
     """
     explanation:

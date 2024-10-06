@@ -166,7 +166,8 @@ class EzQtDataSaver():
                         print('except when fetch data of ' + str(name))
                     return data                      
                 data = fetch_data()
-                code_data.append(data)
+                if data is not None and not data.empty:
+                    code_data.append(data)
             code_data = pd.concat(code_data[::-1], axis=0)
             data_list.append(code_data)
         data = pd.concat(data_list)
@@ -181,6 +182,7 @@ class EzQtDataSaver():
             data['date'] = pd.to_datetime(data['trade_date'], utc=False, format='%Y%m%d')
             data = data.set_index('date', drop=False)
             data['date'] = data['date'].apply(lambda x: str(x)[0:10])
+            data = data.sort_values(by='trade_date')
             return data        
     
     def fetch_stock_fund_adj(self, codes, start='', end='', if_qfq=False):
@@ -189,41 +191,48 @@ class EzQtDataSaver():
             codes = [codes]
         start = self.get_tushare_time(start)
         end = self.get_tushare_time(end)
+        starts, ends = self.time_split(start, end)  # Assuming time_split method exists
         adj_list = []
         for code in codes:
             ts_code, asset_type = self.code_assetType_convert(code)
-            if asset_type == 'E':
-                adj = pro.adj_factor(
-                    ts_code=ts_code,
-                    start_date=start,
-                    end_date=end
-                )
-                if if_qfq:
-                    end_adj = pro.adj_factor(
+            code_data = []
+            for _start, _end in zip(starts, ends):
+                if asset_type == 'E':
+                    adj = pro.adj_factor(
                         ts_code=ts_code,
-                        trade_date=end
-                    ).loc[0, 'adj_factor']
-                    adj['adj'] = adj['adj_factor'].apply(lambda x: x / end_adj)
-            elif asset_type == 'FD':
-                adj = pro.fund_adj(
-                    ts_code=ts_code,
-                    start_date=start,
-                    end_date=end
-                )
-                if if_qfq:
-                    end_adj = pro.fund_adj(
+                        start_date=_start,
+                        end_date=_end
+                    )
+                    if if_qfq and not adj.empty:
+                        end_adj = pro.adj_factor(
+                            ts_code=ts_code,
+                            trade_date=_end
+                        ).iloc[-1]['adj_factor']
+                        adj['adj'] = adj['adj_factor'].apply(lambda x: x / end_adj)
+                elif asset_type == 'FD':
+                    adj = pro.fund_adj(
                         ts_code=ts_code,
-                        trade_date=end
-                    ).loc[0, 'adj_factor']
-                    adj['adj'] = adj['adj_factor'].apply(lambda x: x / end_adj)
-            else:
-                adj = None
-            adj_list.append(adj)
+                        start_date=_start,
+                        end_date=_end
+                    )
+                    if if_qfq and not adj.empty:
+                        end_adj = pro.fund_adj(
+                            ts_code=ts_code,
+                            trade_date=_end
+                        ).iloc[-1]['adj_factor']
+                        adj['adj'] = adj['adj_factor'].apply(lambda x: x / end_adj)
+                else:
+                    adj = None
+                if adj is not None and not adj.empty:
+                    code_data.append(adj)
+            code_data = pd.concat(code_data[::-1], axis=0)
+            adj_list.append(code_data)
         adj = pd.concat(adj_list)
         adj['code'] = adj['ts_code'].apply(lambda x: str(x)[0:6])
         adj['date'] = pd.to_datetime(adj['trade_date'], utc=False, format='%Y%m%d')
+        adj = adj.set_index('date', drop=False)
         adj['date'] = adj['date'].apply(lambda x: str(x)[0:10])
-        adj = adj.set_index(['date', 'code'])
+        adj = adj.sort_values(by='trade_date') 
         return adj
     
     def save_stock_fund_list(self, client=DATABASE):
@@ -262,7 +271,10 @@ class EzQtDataSaver():
         )
         end_date = self.now_time
         err = []
-        for ts_code in tqdm(stock_list + fund_list):
+        all_list = stock_list + fund_list
+        code_idx = 0
+        while code_idx < len(all_list):
+            ts_code = all_list[code_idx]
             try:
                 ref_count = coll_stock_fund_day.count_documents({'code': str(ts_code)[0:6]})
                 # 增量更新
@@ -289,7 +301,7 @@ class EzQtDataSaver():
                         coll_stock_fund_day.insert_many(
                             json_from_pandas(
                                 self.fetch_stock_fund_day(
-                                    str(ts_code),
+                                    str(ts_code)[0:6],
                                     start_date,
                                     end_date,
                                     'bfq'
@@ -298,10 +310,15 @@ class EzQtDataSaver():
                         )
                         print(f"Saving {ts_code} from {start_date} to {end_date}")
                         time.sleep(1.0)
+                code_idx += 1
             except Exception as e:
-                print(e)
+                if '每分钟最多访问该接口' in str(e):
+                    print("访问频次太高，等待重试")
+                    time.sleep(60.0)
+                else:
+                    print(e)
+                    code_idx += 1
                 err.append(str(ts_code))
-                time.sleep(10.0)
             sys.stdout.flush()
             
     def save_stock_fund_adj(self, client=DATABASE):
@@ -315,7 +332,10 @@ class EzQtDataSaver():
         )
         end_date = self.now_time
         err = []
-        for ts_code in tqdm(stock_list + fund_list):
+        all_list = stock_list + fund_list
+        code_idx = 0
+        while code_idx < len(all_list):
+            ts_code = all_list[code_idx]
             try:
                 ref_count = coll_stock_fund_adj.count_documents({'code': str(ts_code)[0:6]})
                 # 增量更新
@@ -327,7 +347,7 @@ class EzQtDataSaver():
                         coll_stock_fund_adj.insert_many(
                             json_from_pandas(
                                 self.fetch_stock_fund_adj(
-                                    str(ts_code),
+                                    str(ts_code)[0:6],
                                     start_date,
                                     end_date
                                 )
@@ -341,7 +361,7 @@ class EzQtDataSaver():
                         coll_stock_fund_adj.insert_many(
                             json_from_pandas(
                                 self.fetch_stock_fund_adj(
-                                    str(ts_code),
+                                    str(ts_code)[0:6],
                                     start_date,
                                     end_date
                                 )
@@ -349,11 +369,34 @@ class EzQtDataSaver():
                         )
                         print(f"Saving {ts_code} from {start_date} to {end_date}")
                         time.sleep(1.0)
+                code_idx += 1
             except Exception as e:
-                print(e)
-                time.sleep(10.0)
+                if '每分钟最多访问该接口' in str(e):
+                    print("访问频次太高，等待重试")
+                    time.sleep(60.0)
+                else:
+                    print(ts_code, e)
+                    code_idx += 1
                 err.append(str(ts_code))
-        
+    
+    def remove_duplicate(self, client=DATABASE):
+        coll_stock_fund_day = client.stock_fund_day
+        coll_stock_fund_adj = client.stock_fund_adj
+        for code in tqdm(coll_stock_fund_day.distinct('code')):
+            data = coll_stock_fund_day.find({'code': code}).sort('date', pymongo.ASCENDING)
+            data = list(data)
+            if len(data) > 1:
+                for i in range(1, len(data)):
+                    if data[i]['date'] == data[i-1]['date']:
+                        coll_stock_fund_day.delete_one({'_id': data[i-1]['_id']})
+        for code in tqdm(coll_stock_fund_adj.distinct('code')):
+            data = coll_stock_fund_adj.find({'code': code}).sort('date', pymongo.ASCENDING)
+            data = list(data)
+            if len(data) > 1:
+                for i in range(1, len(data)):
+                    if data[i]['date'] == data[i-1]['date']:
+                        coll_stock_fund_adj.delete_one({'_id': data[i-1]['_id']})
+
     @property
     def trade_date_sse(self):
         pro = self.get_pro()
