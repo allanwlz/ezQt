@@ -20,8 +20,10 @@ class EzQtDataSaver():
     def set_token(self, token=None):
         try:
             if token is None:
-                token = EzQtSETTING.get_config('TSPRO', 'token', "none")
-                if token == "none":
+                current_date = datetime.now()
+                current_date_str = current_date.strftime('%Y-%m-%d')
+                token_date = EzQtSETTING.get_config('TSPRO', 'token_date')
+                if token_date == None or token_date != current_date_str:
                     response = requests.get(TsConfig.TOKEN_URL)
                     if response.status_code == 200:
                         soup = BeautifulSoup(response.text, 'html.parser')
@@ -30,6 +32,7 @@ class EzQtDataSaver():
                         raise Exception('Failed to retrieve the web page. Status code: {response.status_code}')
                     print("set token: ", token)
                     EzQtSETTING.set_config('TSPRO', 'token', token)
+                    EzQtSETTING.set_config('TSPRO', 'token_date', current_date_str)
             else:
                 EzQtSETTING.set_config('TSPRO', 'token', token)
             ts.set_token(token)

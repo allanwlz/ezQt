@@ -46,10 +46,7 @@ class EzQtSetting():
         try:
             return config.get(section, option)
         except (configparser.NoSectionError, configparser.NoOptionError):
-            if default_value is not None:
-                return default_value
-            else:
-                raise  # 如果没有默认值，重新抛出异常
+            return default_value
     
     def set_config(self, section, option, value):
         config = configparser.ConfigParser()

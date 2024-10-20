@@ -50,7 +50,7 @@ RUN chown -R jovyan:users /home/jovyan
 RUN ~/.fzf/install --all
 
 # 安装其他你可能需要的库
-RUN pip install pyxirr 
+RUN pip install pyxirr pyfolio
 
 # 切换回 jovyan 用户
 USER jovyan

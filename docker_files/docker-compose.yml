@@ -29,7 +29,7 @@ services:
     image: allanwlz/ezqt-jupyter:latest
     container_name: jupyterlab
     volumes:
-      - ../:/home/jovyan/data
+      - ../:/home/jovyan/lab
     ports:
       - "8081:8081"
     environment:
